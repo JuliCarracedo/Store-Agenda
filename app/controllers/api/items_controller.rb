@@ -46,6 +46,8 @@ class Api::ItemsController < ApplicationController
 
         cart = {}
         error = false
+
+        # Gives data a more manageable format
         params[:cart].each do |item|
                 if cart[item]
                     cart[item] += 1
@@ -58,14 +60,26 @@ class Api::ItemsController < ApplicationController
                 end 
             end
 
-        cart.each do |key, value|
-           @total += Item.find_by(code: key).price * value
+        #Calculates total with discounts if any
+        if params[:discounts]
+            params[:discounts].each do |discount|
+                cart.each do |key,value|
+                    cart[key] = apply_discount(discount,key,value)
+                end
+            end
         end
+
+        #Calculates Total
+        cart.each do |key, value|
+        @total += Item.find_by(code: key).price * value
+        end
+
         unless error
-            json_response({cart: cart ,total: num_to_price(@total)})
+            json_response({cart: params[:cart] ,total: num_to_price(@total)})
         else
             json_error({error:"One or many codes are invalid"}, 422)
         end
+
     end
 
     private
@@ -74,4 +88,27 @@ class Api::ItemsController < ApplicationController
         "€#{sprintf('%.2f',i.to_f / 100)}"
     end
 
+    #Updates the cart hash according to discount rules
+    def apply_discount(discount, key, value)
+        
+        discount_hash = {}
+        # 2 x 1 in Mugs
+        discount_hash['11245'] = ->(key,value) do
+                                        if key==='MUG' && value >= 2
+                                            return value - 1
+                                        else
+                                            return value
+                                        end
+                                    end
+        # 30% in T-shirts buying 3 or more
+        discount_hash['22113'] = ->(key,value) do 
+                                        if key ==='TSHIRT' && value >=3
+                                            return (value.to_f*0.7).round(2)
+                                        else
+                                            return value
+                                        end
+                                    end
+        # apply_discount won't try to apply fake discount codes
+        return discount_hash[discount] ? discount_hash[discount].(key,value) : value
+    end
 end

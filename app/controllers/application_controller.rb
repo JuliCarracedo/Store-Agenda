@@ -9,5 +9,4 @@ class ApplicationController < ActionController::Base
     def json_error error , status
         render json: error , status: status
     end
-
 end
