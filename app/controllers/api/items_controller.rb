@@ -39,6 +39,35 @@ class Api::ItemsController < ApplicationController
         end
     end
 
+    # Allows to check the total value of a list of items
+    # Parameters: cart: Array of item codes
+    def cart
+        @total = 0
+
+        cart = {}
+        error = false
+        params[:cart].each do |item|
+                if cart[:item]
+                    cart[:item] += 1
+                else
+                    if(Item.find_by(code: item))
+                        cart[item] = 1
+                    else
+                        error = true
+                    end
+                end 
+            end
+
+        cart.each do |key, value|
+           @total += Item.find_by(code: key).price * value
+        end
+        unless error
+            json_response({cart: params[:cart] ,total: num_to_price(@total)})
+        else
+            json_error({error:"One or many codes are invalid"}, 422)
+        end
+    end
+
     private
 
     def num_to_price i
