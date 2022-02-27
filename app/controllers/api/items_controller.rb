@@ -47,8 +47,8 @@ class Api::ItemsController < ApplicationController
         cart = {}
         error = false
         params[:cart].each do |item|
-                if cart[:item]
-                    cart[:item] += 1
+                if cart[item]
+                    cart[item] += 1
                 else
                     if(Item.find_by(code: item))
                         cart[item] = 1
@@ -62,7 +62,7 @@ class Api::ItemsController < ApplicationController
            @total += Item.find_by(code: key).price * value
         end
         unless error
-            json_response({cart: params[:cart] ,total: num_to_price(@total)})
+            json_response({cart: cart ,total: num_to_price(@total)})
         else
             json_error({error:"One or many codes are invalid"}, 422)
         end
