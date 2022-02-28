@@ -16,7 +16,7 @@ class Api::ItemsController < ApplicationController
     #Parameters: {id: Integer, price: Positive Integer}
     def update
 
-        if params[:price].match(/[€.]/)
+        if params[:price].match(/\D/)
             json_error('Price must be expressed in cents and without symbols', 422) 
             return
         end
