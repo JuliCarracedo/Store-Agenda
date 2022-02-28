@@ -46,6 +46,11 @@ class Api::ItemsController < ApplicationController
 
     # Calculates total with discounts if any
 
+    if cart['error']
+      json_error({ error: 'One or many codes are invalid' }, 422)
+      return
+    end
+
     params[:discounts]&.each do |discount|
       cart.each do |key, value|
         cart[key] = apply_discount(discount, key, value)
@@ -55,11 +60,9 @@ class Api::ItemsController < ApplicationController
     # Calculates Total
     @total = sum_total(cart)
 
-    if cart['error']
-      json_error({ error: 'One or many codes are invalid' }, 422)
-    else
+
       json_response({ cart: params[:cart], total: num_to_price(@total) })
-    end
+
   end
 
   private
@@ -76,7 +79,7 @@ class Api::ItemsController < ApplicationController
       elsif Item.find_by(code: item)
         cart[item] = 1
       else
-        cart['error'] = true
+        cart['error'] = 0
       end
     end
     cart
